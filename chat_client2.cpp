@@ -18,6 +18,9 @@
 
 using asio::ip::tcp;
 
+int num1 = 0;
+
+
 typedef std::deque<chat_message> chat_message_queue;
 
 class chat_client
@@ -71,9 +74,9 @@ private:
         {
           if (!ec && read_msg_.decode_header())
           {
-            //Coming form the server
-          //  std::vector<card> car = read_msg_.ca.p_card;
-        //  std::cout << "Your card is"<< car.get_face() <<" of "<< car.get_suit() << '\n';
+            if(read_msg_.ca.stand != true)
+              std::cout << "Your cards " << read_msg_.ca.c_face << " of "<< read_msg_.ca.c_suit<< std::endl;
+
             do_read_body();
           }
           else
@@ -91,12 +94,24 @@ private:
         {
           if (!ec)
           {
-            if (read_msg_.ca.valid)
-              std::cout << "it is valid" << std::endl;
-            if (read_msg_.gs.valid)
-              std::cout << "the dealer points are " << read_msg_.gs.dealer_points << std::endl;
-            std::cout.write(read_msg_.body(), read_msg_.body_length());
-            std::cout << "\n";
+
+            if (read_msg_.gs.valid && read_msg_.ca.stand != true){
+              std::cout << "/* -------------------------------- */" << '\n';
+              std::cout << "/* What you like to do? */" << '\n';
+              std::cout << "Press 1 for Hit" << '\n';
+              std::cout << "Press 2 for Stand" << '\n';
+              std::cout << "Press 3 for Split" << '\n';
+              std::cout << "Press 5 for Insurance" << '\n';
+              std::cout << "/* -------------------------------- */" << '\n';
+            }
+            else{
+              std::cout << "You have now $" << read_msg_.gs.players_credit << '\n';
+              std::cout << "You stand, you win or lose" << '\n';
+              //Start new game now.
+            }
+
+            //std::cout.write(read_msg_.body(), read_msg_.body_length());
+            //std::cout << "\n";
             do_read_header();
           }
           else
@@ -135,6 +150,17 @@ private:
   chat_message_queue write_msgs_;
 };
 
+float send_betamount(){
+  char dollar[chat_message::max_body_length + 1];
+  std::cout << "/-----------------------------/" << '\n';
+  std::cout << "Enter the bet amount: $";
+  std::cin.getline(dollar, chat_message::max_body_length + 1);
+  std::string fs(dollar);
+  float dol =std::stof(fs);
+  return dol;
+
+}
+
 int main(int argc, char* argv[])
 {
   try
@@ -154,12 +180,11 @@ int main(int argc, char* argv[])
     std::thread t([&io_context](){ io_context.run(); });
 
     char ans[chat_message::max_body_length + 1];
-    char dollar[chat_message::max_body_length + 1];
     char nam[chat_message::max_body_length + 1];
 
     chat_message msg;
     std::cout << "Welcome to the BlackJack Game" << '\n';
-    std::cout << "Do you like to start the game?" << '\n';
+    std::cout << "Do you like to start the game? ";
     std::cin.getline(ans, chat_message::max_body_length + 1);
 
     int result = strcmp(ans, "yes");
@@ -171,41 +196,63 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Enter your name: ";
-    std::cin.getline(nam, chat_message::max_body_length + 1);
-
-    if(nam != NULL){
-      msg.ca.name_valid = true;
-      strcpy(msg.ca.name, nam);
-    }
-
-    std::cout << "/-----------------------------/" << '\n';
-    std::cout << "Enter the bet amount: $";
-    std::cin >> dollar;
-
-    std::string fs(dollar);
-    float dol =std::stof(fs);
-
-    if(msg.ca.start_game){
-    char line[chat_message::max_body_length + 1];
-    while (std::cin.getline(line, chat_message::max_body_length + 1))
+    //char line[chat_message::max_body_length + 1];
+    while (std::cin.getline(nam, chat_message::max_body_length + 1))
     {
-
-      //get the line from command and encode it.
-      msg.body_length(std::strlen(line));
-      std::memcpy(msg.body(), line, msg.body_length());
-      //
-      msg.ca.bet_amo_ = dol;
-      msg.ca.valid = true;
-      msg.ca.C[0] = 'A';
-      msg.encode_header(); //enconded such that I can decode in server
-
-      //If need to write in the same terminal
-      c.write(msg);
+      msg.ca.bet = true;
+      msg.ca.track_num = num1;
+      if(num1 == 0 ){
+        msg.ca.name_valid = true;
+        strcpy(msg.ca.name, nam);
+        num1++;
+    }else{
+      if(strcmp(nam, "Hit")==0){
+        std::cout << " I am to Hit" << '\n';
+        msg.ca.hit = true;
+        msg.ca.stand = false;
+        msg.ca.insurance = false;
+        msg.ca.split = false;
+        msg.ca.bet = false;
+      }
+      else if(strcmp(nam, "Stand")==0){
+        std::cout << " I am to Stand" << '\n';
+        msg.ca.hit = false;
+        msg.ca.stand = true;
+        msg.ca.insurance =false;
+        msg.ca.split =false;
+        msg.ca.bet = false;
+      }
+      else if(strcmp(nam, "Split")==0){
+        std::cout << " I am to Split" << '\n';
+        msg.ca.hit = false;
+        msg.ca.stand =false;
+        msg.ca.insurance =false;
+        msg.ca.split = true;
+        msg.ca.bet = false;
+      }
+      else if(strcmp(nam, "Insurance")==0){
+        std::cout << " I am to Insurance" << '\n';
+        msg.ca.hit = false;
+        msg.ca.stand =false;
+        msg.ca.insurance = true;
+        msg.ca.split =false;
+        msg.ca.bet = false;
+      }
     }
+    if(msg.ca.bet){
+      float d = send_betamount();
+      msg.ca.bet_amo_ = d;
+    }
+      //get the line from command and encode it.
+      msg.body_length(std::strlen(nam));
+      std::memcpy(msg.body(), nam, msg.body_length());
+      msg.encode_header();
+      c.write(msg);
 
+    }
     c.close();
     t.join();
-  }}
+  }
   catch (std::exception& e)
   {
     std::cerr << "Exception: " << e.what() << "\n";

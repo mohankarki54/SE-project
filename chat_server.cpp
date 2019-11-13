@@ -31,10 +31,23 @@
 using asio::ip::tcp;
 using namespace std;
 
+/* Demo to find the card value
+vector<card> Car;
+Car.push_back(all_card[0]);
+Car.push_back(all_card[1]);
+std::vector<int> v;
+v = calculate_hand_value(Car);
+int k = v.size();
+std::cout << k << '\n';
+for(int i = 0; i< k; i++){
+	std::cout << v[i] << '\n';
+}*/
+
+int xxx;
+
 int num = 0;
 float id_credit = 100;
 float dealer_cred = 500;
-string msg = "";
 
 int co_num = 0;
 
@@ -71,15 +84,13 @@ class Make_Card{
 		void createDeck(){
 			for(int i = 0; i<6; i++){
 				for(int count = 0; count < 52; count++){
-					//char *A = faces[1].c_str();
-					//card c(&faces[1][0],&suits[1][0]);
 					all_card.push_back(card(&faces[count % 13][0],  &suits[count / 13][0]));
 				}
 			}
-			/*for(int j = 0; j< 5; j++){
+		/*for(int j = 0; j< 10; j++){
 				std::cout <<  all_card[j].get_face()<<" "<< all_card[j].get_suit() <<'\n';
-			}*/
-			//std::cout << all_card.size() << '\n';
+			}
+			std::cout << all_card.size() << '\n';*/
 		}
 
 		void suffleDeck(){
@@ -87,11 +98,10 @@ class Make_Card{
 				unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 				std::default_random_engine e(seed);
 				std::shuffle(all_card.begin(), all_card.end(), e);
-				std::cout << "after suffleDeck" << '\n';
-			/*	for(int j = 0; j< 5; j++){
+				/*for(int j = 0; j< 10; j++){
 					std::cout <<  all_card[j].get_face()<<" "<< all_card[j].get_suit() <<'\n';
-				} */
-		//	std::cout << all_card.size() << '\n';
+				}
+			std::cout << all_card.size() << '\n';*/
 		}
 };
 
@@ -146,21 +156,20 @@ int random_number(){
 	return num;
 }
 
+int dealer_rand_number(){
+	//srand (time(1));
+	/* generate secret number between 0 and 312: */
+	int num = rand() % 311;
+	return num;
+}
+
 std::vector<int> calculate_hand_value (vector<card> cards)
 {
 //When Ace there will be two value.
-
-	//std::cout << cards[0].get_face() << '\n';
-
 	int N = cards.size();
 	std::vector<int> value;
-
-	//value[0] = 0;
-	//value[1] = 0;
-
 	int val1 = 0;
 	int val2 = 0;
-
 	int i;
 	for(i = 0; i< N; i++){
 		if(is_ace(cards[i].get_face())){
@@ -181,7 +190,6 @@ std::vector<int> calculate_hand_value (vector<card> cards)
 
 //---------------------------------------------------------------
 class chat_participant{
-
 public:
   virtual ~chat_participant() {}
   virtual void deliver(const chat_message& msg) = 0;
@@ -189,7 +197,8 @@ public:
   float credit;
   string msg;
 	std::vector<card> user_cards;
-	string name;
+	std::vector<int> hand_value;
+	char* name;
   chat_participant(){
       id = num+1;
       credit = id_credit;
@@ -204,57 +213,8 @@ typedef std::shared_ptr<chat_participant> chat_participant_ptr;
 class chat_room
 {
 public:
-  void join(chat_participant_ptr participant)
-  {
-		/*vector<card> Car;
-		Car.push_back(all_card[0]);
-		Car.push_back(all_card[1]);
-		std::vector<int> v;
-		v = calculate_hand_value(Car);
-		int k = v.size();
-		std::cout << k << '\n';
-		for(int i = 0; i< k; i++){
-			std::cout << v[i] << '\n';
-		}*/
 
-	num++;
-  cout<<"Player id: "<<participant->id<<" Joined."<<endl;
-	cout<<"Player id: "<<participant->id<<" credit: "<< id_credit <<endl;
-
-		participants_.insert(participant);
-
-	//Sent the message to all the participant
-  //  for (auto msg: recent_msgs_)
-  //    participant->deliver(msg);
-
-  }
-
-  void leave(chat_participant_ptr participant)
-  {
-	num = num - 1;
-  int participant_id = participant->id;
-    participants_.erase(participant);
-    cout<<"Player with id "<< participant_id << " left the game"<<endl;
-
-  }
-
-  void deliver(const chat_message& msg)
-  {
-
-    recent_msgs_.push_back(msg);
-    while (recent_msgs_.size() > max_recent_msgs)
-      recent_msgs_.pop_front();
-
-
-    /*for (auto participant: participants_){
-        //  if (participant->id==2){
-
-            participant->deliver(msg);
-      //  }
-		}*/
-  }
-
-	bool all_players_have_a_name()
+	/*bool all_players_have_a_name()
  {
 		bool retval = true;
 		for (auto participant: participants_)
@@ -263,6 +223,50 @@ public:
 		}
 		return retval;
  }
+*/
+  void join(chat_participant_ptr participant)
+  {
+	num++;
+  cout<<"Player id: "<<participant->id<<" Joined."<<endl;
+	cout<<"Player id: "<<participant->id<<" credit: "<< id_credit <<endl;
+
+	participants_.insert(participant);
+
+	//Sent the message to all the participant
+  for (auto msg: recent_msgs_)
+      participant->deliver(msg);
+  }
+
+  void leave(chat_participant_ptr participant)
+  {
+		num = num - 1;
+  	int participant_id = participant->id;
+		int s = participant->credit - 100;
+    participants_.erase(participant);
+    cout<<"Player with id "<< participant_id << " left the game"<<endl;
+		if(s >= 0 ){
+			std::cout << participant->name <<" wins $"<< s << '\n';
+			std::cout << "------------------------------" << '\n';
+		}
+		else{
+			std::cout << participant->name <<" Lose $"<< -1 * s << '\n';
+			std::cout << "------------------------------" << '\n';
+		}
+
+  }
+
+  void deliver(const chat_message& msg)
+  {
+    recent_msgs_.push_back(msg);
+    while (recent_msgs_.size() > max_recent_msgs)
+      recent_msgs_.pop_front();
+
+    for (auto participant: participants_){
+          if (participant->id== xxx){
+            participant->deliver(msg);
+        }
+		}
+  }
 
 private:
   std::set<chat_participant_ptr> participants_;
@@ -272,6 +276,8 @@ private:
 
 //----------------------------------------------------------------------
 
+
+//----------------------------
 class chat_session
   : public chat_participant,
     public std::enable_shared_from_this<chat_session>
@@ -281,13 +287,7 @@ public:
     : socket_(std::move(socket)),
       room_(room)
   {
-		Make_Card make_card;
-		make_card.createDeck();
-		make_card.suffleDeck();
-		read_msg_.gs.dealer_credit = dealer_cred;
-		//when the dealer lose or win.
-		//dealer_cred = read_msg_.gs.dealer_credit;
-		std::cout << "Creating a blackjack_player " << std::endl;
+
   }
 
   void start()
@@ -320,16 +320,63 @@ private:
           if (!ec && read_msg_.decode_header())
           {
             read_msg_.gs.valid = true;
-						if(co_num == 0){
-						std::cout << "About to Start the BlackJack Game." << '\n';
-						co_num++;
+						if(read_msg_.ca.track_num == 0){
+							//strcpy(name, read_msg_.ca.name);
+							std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
+							int n = random_number();
+							strcpy(read_msg_.ca.c_face, all_card[n].get_face());
+							strcpy(read_msg_.ca.c_suit, all_card[n].get_suit());
+
+							user_cards.push_back(all_card[n]);
+							hand_value = calculate_hand_value(user_cards);
+
+							std::cout << "/*---------------------------------*/" << '\n';
+							std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
+						else if(read_msg_.ca.hit){
+							std::cout << "Player asked the new card" << '\n';
+							int n = random_number();
+							user_cards.push_back(all_card[n]);
+							hand_value = calculate_hand_value(user_cards);
+							strcpy(read_msg_.ca.c_face, all_card[n].get_face());
+							strcpy(read_msg_.ca.c_suit, all_card[n].get_suit());
+
+					std::cout << "----------------------------" << '\n';
+							if(hand_value[0] != hand_value[1]){
+							std::cout << "Current hand value " << hand_value[0] << '\n';
+							std::cout << "Current hand value " << hand_value[1] << '\n';
+						}
+						else{
+							std::cout << "Current hand value " << hand_value[0] << '\n';
+						}
+						std::cout << "----------------------------" << '\n';
+							std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
+						}
+						else if(read_msg_.ca.stand){
+							std::cout << "Players want to stand." << '\n';
+							//do something when stand
+							read_msg_.ca.bet = true;
+						}
+						else if(read_msg_.ca.split){
+							std::cout << "Player want to split." << '\n';
+						}
+						else if(read_msg_.ca.insurance){
+							std::cout << "Players like to have insurance." << '\n';
+							read_msg_.ca.bet = true;
+
+						}
+						int j = dealer_rand_number();
+						std::cout << "Dealers cards " << all_card[j].get_face() << " of "<< all_card[j].get_suit() << std::endl;
+						std::cout << "-----------------------------------" << '\n';
+
+						xxx = id;
+						std::cout << "---------------------------------" << '\n';
 						std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
 						read_msg_.gs.players_credit = credit - read_msg_.ca.bet_amo_;
 						credit = read_msg_.gs.players_credit;
-            //read_msg_.gs.dealer_points=count++;
+						read_msg_.encode_header();
 
-						if(read_msg_.ca.hit){
+					/*	if(read_msg_.ca.hit){
 							int n = random_number();
 							user_cards.push_back(all_card[n]);
 							//all_card.erase(n);
@@ -339,13 +386,11 @@ private:
 							int n = random_number();
 							user_cards.push_back(all_card[n]);
 							//all_card.erase(n);
-						}
-
-						read_msg_.ca.p_card = user_cards;
-						read_msg_.encode_header();
+						}*/
 
 						std::cout << "Player "<< id <<" after bet have $" << read_msg_.gs.players_credit << std::endl;
-            do_read_body();
+						std::cout << "-----------------------------" << '\n';
+						do_read_body();
           }
           else
           {
@@ -364,21 +409,21 @@ private:
           if (!ec)
           {
 						read_msg_.gs.players_credit = credit;
-						read_msg_.encode_header();
 
-						if (self->name>"") // quick way to see if they have entered a name
-            {
+						//if (self->name>"") // quick way to see if they have entered a name
+            //{
 							//initially read_msg_.hit
-                if (read_msg_.ca.start_game) // also need to check in order, since everyone has a turn
-                {
+                //if (read_msg_.ca.start_game) // also need to check in order, since everyone has a turn
+                //{
                    // call the dealer class with some kind of method and
                    // argument
-                   std::string m = self->name + " has asked for a hit.";
+                  // std::string m = self->name + " has asked for a hit.";
+									 std::string m = " has asked for a hit.";
                    strcpy(read_msg_.body(),m.c_str());
                    read_msg_.body_length(strlen(read_msg_.body()));
                    // also set read_msg.gs.XXXto whatever needs to go to the clients
-                }
-            }
+                //}
+            //}
 						read_msg_.encode_header();
             room_.deliver(read_msg_);
             do_read_header();
@@ -421,10 +466,7 @@ private:
 
 //----------------------------------------------------------------------
 
-
 //---------------------------------------
-
-
 class chat_server
 {
 public:
@@ -432,6 +474,14 @@ public:
       const tcp::endpoint& endpoint)
     : acceptor_(io_context, endpoint)
   {
+		Make_Card make_card;
+		make_card.createDeck();
+		make_card.suffleDeck();
+		chat_message read_msg_;
+		read_msg_.gs.dealer_credit = dealer_cred;
+		std::cout << "Starting the BlackJack Game Server" << std::endl;
+		std::cout << "Dealers credit: "<< read_msg_.gs.dealer_credit << '\n';
+		read_msg_.encode_header();
     do_accept();
   }
 
@@ -474,12 +524,6 @@ int main(int argc, char* argv[])
       tcp::endpoint endpoint(tcp::v4(), std::atoi(argv[i]));
       servers.emplace_back(io_context, endpoint);
     }
-
-		/*chat_message msg;
-		int n = random_number();
-		msg.ca.card_face = all_card[n].get_face();
-		msg.ca.card_suit = all_card[n].get_suit();
-		msg.encode_header();*/
 
     io_context.run();
   }

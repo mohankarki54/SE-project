@@ -28,7 +28,6 @@ class card{
     char* get_suit();
 };
 
-
 // these two classes are examples of sending an
 // entire structure as part of the header
 class game_state{
@@ -41,29 +40,33 @@ class game_state{
   bool player_win;
   int something[3];
 
-
   // note you can't use std::string
   // or pointers
 };
 
 class client_action
 {
+
   public:
+  int track_num;
   bool join;
   bool valid;
+
   bool hit;
   bool stand;
-  bool Double;
+  bool insurance;
   bool split;
-  bool surrender;
+
   bool start_game;
   float bet_amo_;
-  char C[8];
+  bool bet;
+
   char name[513];
   bool name_valid;
-  std::vector<card> p_card;
-};
 
+  char c_face[12];
+  char c_suit[20];
+};
 
 class chat_message
 {
@@ -121,8 +124,6 @@ public:
     char *p = data_ + 11; // skip the integer
     std::memcpy(&ca,p,sizeof(client_action));
     std::memcpy(&gs,p+sizeof(client_action),sizeof(game_state));
-  //  std::memcpy(&cd,p+sizeof(client_action)+sizeof(game_state),sizeof(card));
-
 
     if (body_length_ > max_body_length)
     {
@@ -141,7 +142,6 @@ public:
     char *p = data_+11; // skip over the int we just extracted
     std::memcpy(p,&ca,sizeof(client_action));
     std::memcpy(p+sizeof(client_action),&gs,sizeof(game_state));
-    //std::memcpy(p+sizeof(client_action)+sizeof(game_state),&cd,sizeof(card));
 
   }
 
@@ -151,7 +151,7 @@ private:
 public:
   client_action ca;
   game_state gs;
-  //card cd;
+
 };
 
 #endif // CHAT_MESSAGE_HPP
