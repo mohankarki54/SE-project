@@ -26,8 +26,6 @@
 #include "asio.hpp"
 #include "chat_message2.hpp"
 
-#include <gtk/gtk.h>
-
 using asio::ip::tcp;
 using namespace std;
 
@@ -73,6 +71,7 @@ char* card::get_suit(){
 //---------------------
 vector<card> all_card;
 std::vector<card> dealer_card;
+std::vector<int> dealer_values;
 
 //----------------------------------------------------------------------
 string faces[] = {"Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"};
@@ -151,14 +150,11 @@ int is_ace(char* card ){
 
 int random_number(){
 	srand (time(NULL));
-	/* generate secret number between 0 and 312: */
 	int num = rand() % 311;
 	return num;
 }
 
 int dealer_rand_number(){
-	//srand (time(1));
-	/* generate secret number between 0 and 312: */
 	int num = rand() % 311;
 	return num;
 }
@@ -175,16 +171,13 @@ std::vector<int> calculate_hand_value (vector<card> cards)
 		if(is_ace(cards[i].get_face())){
 			val1 += 1;
 			val2 += 11;
-			value.push_back(val1);
-			value.push_back(val2);
 		}else{
 			val1 += card_value(cards[i].get_face());
 			val2 += card_value(cards[i].get_face());
-			value.push_back(val1);
-			value.push_back(val2);
 		}
-
 	}
+	value.push_back(val1);
+	value.push_back(val2);
  return value;
 }
 
@@ -214,24 +207,11 @@ class chat_room
 {
 public:
 
-	/*bool all_players_have_a_name()
- {
-		bool retval = true;
-		for (auto participant: participants_)
-		{
-			retval = retval &&  (participant->name > "");
-		}
-		return retval;
- }
-*/
   void join(chat_participant_ptr participant)
   {
 	num++;
-  cout<<"Player id: "<<participant->id<<" Joined."<<endl;
-	cout<<"Player id: "<<participant->id<<" credit: "<< id_credit <<endl;
-
+  cout<<"Player id: "<<participant->id <<" joined with credit $"<< id_credit <<endl;
 	participants_.insert(participant);
-
 	//Sent the message to all the participant
   for (auto msg: recent_msgs_)
       participant->deliver(msg);
@@ -243,13 +223,14 @@ public:
   	int participant_id = participant->id;
 		int s = participant->credit - 100;
     participants_.erase(participant);
-    cout<<"Player with id "<< participant_id << " left the game"<<endl;
+    cout<<"Player with id "<< participant_id << " left the game."<<endl;
 		if(s >= 0 ){
-			std::cout << participant->name <<" wins $"<< s << '\n';
+			std::cout <<"Player "<< participant->id <<" wins $"<< s << '\n';
 			std::cout << "------------------------------" << '\n';
 		}
 		else{
-			std::cout << participant->name <<" Lose $"<< -1 * s << '\n';
+			int m = -1 * s;
+			std::cout << "Player " <<participant->id <<" Lose $"<< m << '\n';
 			std::cout << "------------------------------" << '\n';
 		}
 
@@ -321,38 +302,66 @@ private:
           {
             read_msg_.gs.valid = true;
 						if(read_msg_.ca.track_num == 0){
-							//strcpy(name, read_msg_.ca.name);
 							std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
-							int n = random_number();
-							strcpy(read_msg_.ca.c_face, all_card[n].get_face());
-							strcpy(read_msg_.ca.c_suit, all_card[n].get_suit());
+							int n = dealer_rand_number();
+							int j = dealer_rand_number();
+
+							int k = random_number();
+							int m = dealer_rand_number();
+
+							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
+							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
+
+							strcpy(read_msg_.ca.c2_face, all_card[j].get_face());
+							strcpy(read_msg_.ca.c2_suit, all_card[j].get_suit());
 
 							user_cards.push_back(all_card[n]);
-							hand_value = calculate_hand_value(user_cards);
+							all_card.erase(all_card.begin()+n);
+
+							user_cards.push_back(all_card[j]);
+							all_card.erase(all_card.begin()+j);
+
+							strcpy(read_msg_.ca.d1_face, all_card[k].get_face());
+							strcpy(read_msg_.ca.d1_suit, all_card[k].get_suit());
+
+							dealer_card.push_back(all_card[k]);
+							all_card.erase(all_card.begin()+k);
+
+							dealer_card.push_back(all_card[m]);
+							all_card.erase(all_card.begin()+m);
 
 							std::cout << "/*---------------------------------*/" << '\n';
-							std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
+						//	std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
-						else if(read_msg_.ca.hit){
+						else if(read_msg_.ca.hit || !read_msg_.ca.stand){
 							std::cout << "Player asked the new card" << '\n';
 							int n = random_number();
 							user_cards.push_back(all_card[n]);
-							hand_value = calculate_hand_value(user_cards);
-							strcpy(read_msg_.ca.c_face, all_card[n].get_face());
-							strcpy(read_msg_.ca.c_suit, all_card[n].get_suit());
+							//hand_value = calculate_hand_value(user_cards);
+							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
+							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
 
-					std::cout << "----------------------------" << '\n';
+					/*std::cout << "----------------------------" << '\n';
 							if(hand_value[0] != hand_value[1]){
 							std::cout << "Current hand value " << hand_value[0] << '\n';
 							std::cout << "Current hand value " << hand_value[1] << '\n';
 						}
 						else{
 							std::cout << "Current hand value " << hand_value[0] << '\n';
-						}
+						}*/
 						std::cout << "----------------------------" << '\n';
 							std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
 						else if(read_msg_.ca.stand){
+							int k= user_cards.size();
+							for(int i = 0; i< k; i++){
+								std::cout << user_cards[i].get_face() << '\n';
+							}
+							hand_value = calculate_hand_value(user_cards);
+							std::cout << "Hand value size " << hand_value.size() << '\n';
+							std::cout << "Current hand value " << hand_value[0] << '\n';
+							std::cout << "Current hand value " << hand_value[1] << '\n';
+
 							std::cout << "Players want to stand." << '\n';
 							//do something when stand
 							read_msg_.ca.bet = true;
@@ -409,21 +418,6 @@ private:
           if (!ec)
           {
 						read_msg_.gs.players_credit = credit;
-
-						//if (self->name>"") // quick way to see if they have entered a name
-            //{
-							//initially read_msg_.hit
-                //if (read_msg_.ca.start_game) // also need to check in order, since everyone has a turn
-                //{
-                   // call the dealer class with some kind of method and
-                   // argument
-                  // std::string m = self->name + " has asked for a hit.";
-									 std::string m = " has asked for a hit.";
-                   strcpy(read_msg_.body(),m.c_str());
-                   read_msg_.body_length(strlen(read_msg_.body()));
-                   // also set read_msg.gs.XXXto whatever needs to go to the clients
-                //}
-            //}
 						read_msg_.encode_header();
             room_.deliver(read_msg_);
             do_read_header();

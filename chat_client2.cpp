@@ -74,9 +74,20 @@ private:
         {
           if (!ec && read_msg_.decode_header())
           {
-            if(read_msg_.ca.stand != true)
-              std::cout << "Your cards " << read_msg_.ca.c_face << " of "<< read_msg_.ca.c_suit<< std::endl;
-
+            if(read_msg_.ca.stand != true){
+              if(read_msg_.ca.track_num ==0){
+               std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
+               std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
+               std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
+             }
+             else{
+               std::cout << "Your card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
+               //std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
+             }
+             }
+             else{
+               std::cout << "Hello" << '\n';
+             }
             do_read_body();
           }
           else
@@ -98,10 +109,10 @@ private:
             if (read_msg_.gs.valid && read_msg_.ca.stand != true){
               std::cout << "/* -------------------------------- */" << '\n';
               std::cout << "/* What you like to do? */" << '\n';
-              std::cout << "Press 1 for Hit" << '\n';
-              std::cout << "Press 2 for Stand" << '\n';
-              std::cout << "Press 3 for Split" << '\n';
-              std::cout << "Press 5 for Insurance" << '\n';
+              std::cout << "Enter Hit for Hit" << '\n';
+              std::cout << "Enter Stand for Stand" << '\n';
+              std::cout << "Enter Split for Split" << '\n';
+              std::cout << "Enter Insurance for Insurance" << '\n';
               std::cout << "/* -------------------------------- */" << '\n';
             }
             else{
@@ -207,7 +218,6 @@ int main(int argc, char* argv[])
         num1++;
     }else{
       if(strcmp(nam, "Hit")==0){
-        std::cout << " I am to Hit" << '\n';
         msg.ca.hit = true;
         msg.ca.stand = false;
         msg.ca.insurance = false;
@@ -215,12 +225,16 @@ int main(int argc, char* argv[])
         msg.ca.bet = false;
       }
       else if(strcmp(nam, "Stand")==0){
-        std::cout << " I am to Stand" << '\n';
-        msg.ca.hit = false;
-        msg.ca.stand = true;
-        msg.ca.insurance =false;
-        msg.ca.split =false;
-        msg.ca.bet = false;
+        char an[chat_message::max_body_length + 1];
+        std::cout << " Are you sure you want to stand? ";
+        std::cin.getline(an, chat_message::max_body_length + 1);
+        if(strcmp(an, "yes") == 0){
+          msg.ca.hit = false;
+          msg.ca.stand = true;
+          msg.ca.insurance =false;
+          msg.ca.split =false;
+          msg.ca.bet = false;
+        }
       }
       else if(strcmp(nam, "Split")==0){
         std::cout << " I am to Split" << '\n';
@@ -242,7 +256,12 @@ int main(int argc, char* argv[])
     if(msg.ca.bet){
       float d = send_betamount();
       msg.ca.bet_amo_ = d;
+      if(msg.ca.stand){
+        msg.ca.stand = false;
+        std::cout << "/* Starting the new round */" << '\n';
+      }
     }
+
       //get the line from command and encode it.
       msg.body_length(std::strlen(nam));
       std::memcpy(msg.body(), nam, msg.body_length());

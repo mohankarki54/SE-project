@@ -38,6 +38,7 @@ class game_state{
   float dealer_credit;
   float players_credit;
   bool player_win;
+  bool blackjack;
   int something[3];
 
   // note you can't use std::string
@@ -64,8 +65,14 @@ class client_action
   char name[513];
   bool name_valid;
 
-  char c_face[12];
-  char c_suit[20];
+  char c1_face[12];
+  char c1_suit[20];
+
+  char c2_face[12];
+  char c2_suit[20];
+
+  char d1_face[12];
+  char d1_suit[20];
 };
 
 class chat_message
