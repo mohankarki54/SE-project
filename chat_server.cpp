@@ -181,6 +181,74 @@ std::vector<int> calculate_hand_value (vector<card> cards)
  return value;
 }
 
+int check_blackjack(vector<card> car){
+		std::vector<int> v = calculate_hand_value(car);
+		int k = v.size();
+		for(int i = 0; i < k; i++ ){
+			if(v[i] == 21){
+				return 1;
+			}
+		}
+		return 0;
+}
+
+int cal_value(std::vector<card> dea){
+	std::vector<int> dea_value = calculate_hand_value(dea);
+	int mm;
+	if(dea_value[0] !=dea_value[1]){
+			if(dea_value[0] > dea_value[1]){
+				if(dea_value[0]<22){
+					mm = dea_value[0];
+				}
+				else{
+					mm = dea_value[1];
+				}
+			}
+			else{
+				if(dea_value[1]<22){
+					mm = dea_value[1];
+				}
+				else{
+					mm = dea_value[0];
+				}
+			}
+	}
+	else{
+		mm = dea_value[0];
+	}
+	return mm;
+}
+
+int calculate_p_value(std::vector<card> dea){
+	std::vector<int> dea_value = calculate_hand_value(dea);
+	//std::cout <<" Integer value :"<< dea_value[0] << dea_value[1] << '\n';
+	int mm;
+	if(dea_value[0] !=dea_value[1]){
+			if(dea_value[0] > dea_value[1]){
+				if(dea_value[0]<22){
+					mm = dea_value[0];
+				}
+				else{
+					mm = dea_value[1];
+				}
+			}
+			else{
+				if(dea_value[1]<22){
+					mm = dea_value[1];
+				}
+				else{
+					mm = dea_value[0];
+				}
+			}
+	}
+	else{
+		mm = dea_value[0];
+	}
+	return mm;
+}
+
+
+
 //---------------------------------------------------------------
 class chat_participant{
 public:
@@ -244,7 +312,7 @@ public:
 
     for (auto participant: participants_){
           if (participant->id== xxx){
-            participant->deliver(msg);
+            	participant->deliver(msg);
         }
 		}
   }
@@ -268,7 +336,6 @@ public:
     : socket_(std::move(socket)),
       room_(room)
   {
-
   }
 
   void start()
@@ -300,8 +367,14 @@ private:
         {
           if (!ec && read_msg_.decode_header())
           {
+							xxx = id;
+
+							std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
+
+
             read_msg_.gs.valid = true;
 						if(read_msg_.ca.track_num == 0){
+
 							std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
 							int n = dealer_rand_number();
 							int j = dealer_rand_number();
@@ -330,75 +403,157 @@ private:
 							dealer_card.push_back(all_card[m]);
 							all_card.erase(all_card.begin()+m);
 
+							int blackjack1 = check_blackjack(user_cards);
+							read_msg_.gs.blackjack = blackjack1;
 							std::cout << "/*---------------------------------*/" << '\n';
 						//	std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
 						else if(read_msg_.ca.hit || !read_msg_.ca.stand){
 							std::cout << "Player asked the new card" << '\n';
 							int n = random_number();
-							user_cards.push_back(all_card[n]);
-							//hand_value = calculate_hand_value(user_cards);
 							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
 							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
+							user_cards.push_back(all_card[n]);
+							all_card.erase(all_card.begin()+n);
+							std::cout << "----------------------------" << '\n';
+						}
 
-					/*std::cout << "----------------------------" << '\n';
-							if(hand_value[0] != hand_value[1]){
-							std::cout << "Current hand value " << hand_value[0] << '\n';
-							std::cout << "Current hand value " << hand_value[1] << '\n';
+						else if(read_msg_.ca.stand)
+						{
+						std::cout << "Players want to stand." << '\n';
+						hand_value = calculate_hand_value(user_cards);
+
+						int mm = cal_value(dealer_card);
+						std::cout << "mm = " << mm << '\n';
+							while(mm < 17){
+								int o = dealer_rand_number();
+								dealer_card.push_back(all_card[o]);
+								all_card.erase(all_card.begin()+o);
+								int kk = cal_value(dealer_card);
+								mm = kk;
+							}
+
+						int play_value = calculate_p_value(user_cards);
+
+
+						int ss = user_cards.size();
+						std::cout << "---------------------------------" << '\n';
+						std::cout << "Users Card" << '\n';
+						for(int i = 0; i < ss; i++){
+							std::cout << user_cards[i].get_face()<<" "<< user_cards[i].get_suit() << '\n';
+						}
+						std::cout << "---------------------------------" << '\n';
+						std::cout << "Dealer Cards" << '\n';
+						int ss1 = dealer_card.size();
+						for(int i = 0; i < ss1; i++){
+							std::cout << dealer_card[i].get_face()<<" "<< dealer_card[i].get_suit() << '\n';
+						}
+						std::cout << "--------------------------------------" << '\n';
+
+
+
+						if(play_value < 22){
+							if(mm < 22){
+								if(play_value > mm){
+									read_msg_.gs.player_win = true;
+								}
+								else{
+									read_msg_.gs.player_win = false;
+								}
+							}
+							else{
+								read_msg_.gs.player_win = true;
+							}
+						}
+						else if(play_value > 21){
+							read_msg_.gs.player_win = false;
 						}
 						else{
-							std::cout << "Current hand value " << hand_value[0] << '\n';
-						}*/
-						std::cout << "----------------------------" << '\n';
-							std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
+							read_msg_.gs.draw = true;
 						}
-						else if(read_msg_.ca.stand){
-							int k= user_cards.size();
-							for(int i = 0; i< k; i++){
-								std::cout << user_cards[i].get_face() << '\n';
-							}
-							hand_value = calculate_hand_value(user_cards);
-							std::cout << "Hand value size " << hand_value.size() << '\n';
-							std::cout << "Current hand value " << hand_value[0] << '\n';
-							std::cout << "Current hand value " << hand_value[1] << '\n';
 
-							std::cout << "Players want to stand." << '\n';
-							//do something when stand
-							read_msg_.ca.bet = true;
+						if(read_msg_.gs.draw){
+							std::cout << "It is Draw. You can start the new round with new bet amount. " << '\n';
 						}
+						else if(read_msg_.gs.player_win){
+							if(read_msg_.gs.blackjack == 1){
+								std::cout << "---------------------------------" << '\n';
+								float win = 1.5 * read_msg_.ca.bet_amo_;
+								read_msg_.gs.players_credit = credit + win;
+								credit = read_msg_.gs.players_credit;
+
+								read_msg_.gs.dealer_credit = dealer_cred - win;
+								dealer_cred = read_msg_.gs.dealer_credit;
+							}
+							else{
+								std::cout << "---------------------------------" << '\n';
+								read_msg_.gs.players_credit = credit + read_msg_.ca.bet_amo_;
+								credit = read_msg_.gs.players_credit;
+								read_msg_.gs.dealer_credit = dealer_cred - read_msg_.ca.bet_amo_;
+								dealer_cred = read_msg_.gs.dealer_credit;
+							}
+						}
+						else{
+							std::cout << "---------------------------------" << '\n';
+							read_msg_.gs.players_credit = credit - read_msg_.ca.bet_amo_;
+							credit = read_msg_.gs.players_credit;
+							read_msg_.gs.dealer_credit = dealer_cred+ read_msg_.ca.bet_amo_;
+							dealer_cred = read_msg_.gs.dealer_credit;
+						}
+
+						std::cout << "Dealer hand value: "<<  mm << '\n';
+						std::cout << "Players Hand valye: "<<  play_value << '\n';
+						std::cout << "Player "<< id <<" after stand have $" << read_msg_.gs.players_credit << std::endl;
+						std::cout << "Dealer after stand have $" << read_msg_.gs.dealer_credit << std::endl;
+						std::cout << "-----------------------------" << '\n';
+
+					}
 						else if(read_msg_.ca.split){
 							std::cout << "Player want to split." << '\n';
 						}
 						else if(read_msg_.ca.insurance){
 							std::cout << "Players like to have insurance." << '\n';
 							read_msg_.ca.bet = true;
-
 						}
-						int j = dealer_rand_number();
-						std::cout << "Dealers cards " << all_card[j].get_face() << " of "<< all_card[j].get_suit() << std::endl;
-						std::cout << "-----------------------------------" << '\n';
+						if(read_msg_.ca.new_round){
+							//std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
+							user_cards.clear();
+							dealer_card.clear();
 
-						xxx = id;
-						std::cout << "---------------------------------" << '\n';
-						std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
-						read_msg_.gs.players_credit = credit - read_msg_.ca.bet_amo_;
-						credit = read_msg_.gs.players_credit;
+							read_msg_.ca.r_value = 1;
+
+							int n = dealer_rand_number();
+							int j = dealer_rand_number();
+
+							int k = random_number();
+							int m = dealer_rand_number();
+
+							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
+							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
+
+							strcpy(read_msg_.ca.c2_face, all_card[j].get_face());
+							strcpy(read_msg_.ca.c2_suit, all_card[j].get_suit());
+
+							user_cards.push_back(all_card[n]);
+							all_card.erase(all_card.begin()+n);
+
+							user_cards.push_back(all_card[j]);
+							all_card.erase(all_card.begin()+j);
+
+							strcpy(read_msg_.ca.d1_face, all_card[k].get_face());
+							strcpy(read_msg_.ca.d1_suit, all_card[k].get_suit());
+
+							dealer_card.push_back(all_card[k]);
+							all_card.erase(all_card.begin()+k);
+
+							dealer_card.push_back(all_card[m]);
+							all_card.erase(all_card.begin()+m);
+
+							int blackjack1 = check_blackjack(user_cards);
+							read_msg_.gs.blackjack = blackjack1;
+							std::cout << "/*---------------------------------*/" << '\n';
+						}
 						read_msg_.encode_header();
-
-					/*	if(read_msg_.ca.hit){
-							int n = random_number();
-							user_cards.push_back(all_card[n]);
-							//all_card.erase(n);
-						}
-
-						if(read_msg_.gs.dealer_points < 17){
-							int n = random_number();
-							user_cards.push_back(all_card[n]);
-							//all_card.erase(n);
-						}*/
-
-						std::cout << "Player "<< id <<" after bet have $" << read_msg_.gs.players_credit << std::endl;
-						std::cout << "-----------------------------" << '\n';
 						do_read_body();
           }
           else
@@ -451,7 +606,6 @@ private:
           }
         });
   }
-
   tcp::socket socket_;
   chat_room& room_;
   chat_message read_msg_;
