@@ -19,8 +19,14 @@
 using asio::ip::tcp;
 
 int num1 = 0;
-int r_value = 0;
+int r_value = 2;
+bool split_v = false;
 
+std::vector<char*> user_cards_f;
+std::vector<char*> dealers_cards_f;
+
+std::vector<char*> user_cards_s;
+std::vector<char*> dealers_cards_s;
 
 typedef std::deque<chat_message> chat_message_queue;
 
@@ -76,29 +82,58 @@ private:
           if (!ec && read_msg_.decode_header())
           {
             if(read_msg_.ca.stand != true){
-              if(read_msg_.ca.track_num ==0){
+              if(read_msg_.ca.track_num ==0 || read_msg_.ca.r_value == 1){
+                if(read_msg_.ca.r_value == 1){
+                  user_cards_f.clear();
+                  user_cards_s.clear();
+                  dealers_cards_f.clear();
+                  dealers_cards_s.clear();
+                }
+               r_value++;
                std::cout << "-----------------------------------" << '\n';
                std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
                std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
                std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
                std::cout << "----------------------------------------" << '\n';
+
+               user_cards_f.push_back(read_msg_.ca.c1_face);
+               user_cards_s.push_back(read_msg_.ca.c2_suit);
+
+               dealers_cards_f.push_back(read_msg_.ca.d1_face);
+               dealers_cards_s.push_back(read_msg_.ca.d2_suit);
               }
-              else if(read_msg_.ca.r_value == 1){
-                r_value++;
-                std::cout << "-----------------------------------" << '\n';
-                std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
-                std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
-                std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
-                std::cout << "----------------------------------------" << '\n';
-              }
-             else{
+            else if(read_msg_.ca.split){
+              split_v = true;
+              std::cout << "-----------Card is splitted-------------" << '\n';
+              std::cout << "-------------------------------------------" << '\n';
+              std::cout << "Your card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
+              std::cout << "Your card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
+              std::cout << "-------------------------------------------" << '\n';
+            }
+             else if(read_msg_.ca.hit){
+               user_cards_f.push_back(read_msg_.ca.c1_face);
+               user_cards_s.push_back(read_msg_.ca.c1_suit);
                std::cout << "-------------------------------------------" << '\n';
                std::cout << "Your card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
                std::cout << "-------------------------------------------" << '\n';
              }
              }
              else{
-               std::cout << "Hello" << '\n';
+          /*   int ss = user_cards_f.size();
+   						std::cout << "---------------------------------" << '\n';
+   					std::cout << "Your Cards" << '\n';
+   						for(int i = 0; i < ss; i++){
+   							std::cout << user_cards_f[i]<<" "<< user_cards_s[i] << '\n';
+   						};*/
+              std::cout << "Your card value: " << read_msg_.gs.p_value << '\n';
+   						std::cout << "---------------------------------" << '\n';
+   					//	std::cout << "Dealer Cards" << '\n';
+   						/*int ss1 = dealers_cards_f.size();
+   						for(int i = 0; i < ss1; i++){
+   							std::cout << dealers_cards_f[i]<<" "<< dealers_cards_s[i] << '\n';
+   						}*/
+              std::cout << "Dealer card value: " << read_msg_.gs.d_value << '\n';
+   						std::cout << "--------------------------------------" << '\n';
              }
             do_read_body();
           }
@@ -190,8 +225,13 @@ float send_betamount(){
   std::cin.getline(dollar, chat_message::max_body_length + 1);
   std::string fs(dollar);
   float dol =std::stof(fs);
-  return dol;
-
+  if(dol > 5){
+    std::cout << "----------------------" << '\n';
+    std::cout << "*-------Error--------*" << '\n';
+    std::cout << "Max Bet Amount is $5. " << '\n';
+    send_betamount();
+  }
+    return dol;
 }
 
 int main(int argc, char* argv[])
@@ -244,7 +284,13 @@ int main(int argc, char* argv[])
         msg.ca.hit = true;
         msg.ca.stand = false;
         msg.ca.insurance = false;
-        msg.ca.split = false;
+
+        if(split_v){
+          msg.ca.split = true;
+        }else{
+          msg.ca.split = false;
+        }
+
         msg.ca.bet = false;
         msg.ca.new_round = false;
       }
@@ -263,6 +309,7 @@ int main(int argc, char* argv[])
       }
       else if(strcmp(nam, "Split")==0){
       //  std::cout << " I am to Split" << '\n';
+        split_v = true;
         msg.ca.hit = false;
         msg.ca.stand =false;
         msg.ca.insurance =false;
@@ -272,12 +319,22 @@ int main(int argc, char* argv[])
       }
       else if(strcmp(nam, "Insurance")==0){
       //  std::cout << " I am to Insurance" << '\n';
+
         msg.ca.hit = false;
         msg.ca.stand =false;
         msg.ca.insurance = true;
-        msg.ca.split =false;
+        if(split_v){
+          msg.ca.split = true;
+        }else{
+          msg.ca.split = false;
+        }
         msg.ca.bet = false;
         msg.ca.new_round = false;
+        char amo[chat_message::max_body_length + 1];
+        std::cout << "Enter the insurance amount $";
+        std::cin.getline(amo, chat_message::max_body_length + 1);
+        float amo_ = stof(amo);
+        msg.ca.ins_amount = amo_;
       }
       else if(strcmp(nam, "New")==0){
       //  std::cout << " I am to Insurance" << '\n';
@@ -285,9 +342,8 @@ int main(int argc, char* argv[])
         msg.ca.stand =false;
         msg.ca.insurance = false;
         msg.ca.split =false;
-        msg.ca.bet = false;
+        msg.ca.bet = true;
         msg.ca.new_round = true;
-
       }
       else{
         msg.ca.hit = false;
@@ -297,13 +353,13 @@ int main(int argc, char* argv[])
         msg.ca.bet = false;
         msg.ca.new_round = false;
       }
-
     }
     if(msg.ca.bet){
       float d = send_betamount();
       msg.ca.bet_amo_ = d;
-      if(msg.ca.stand){
+      if(msg.ca.stand == true){
         msg.ca.stand = false;
+        split_v = false;
         std::cout << "/*-------Starting the new round-------*/" << '\n';
         std::cout << '\n';
       }

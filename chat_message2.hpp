@@ -31,7 +31,9 @@ class card{
 // these two classes are examples of sending an
 // entire structure as part of the header
 class game_state{
-  public:
+public:
+  int user_id;
+    int k;
   bool valid;
   int dealer_points;
   int player_points;
@@ -50,6 +52,12 @@ class game_state{
   int user_hand_value2;
 
   int dealer_hand_value;
+  int d_value;
+  int p_value;
+
+  bool v_greater;
+
+  char de_card[6][15];
 
   // note you can't use std::string
   // or pointers
@@ -72,6 +80,7 @@ class client_action
 
   bool start_game;
   float bet_amo_;
+  float ins_amount;
   bool bet;
 
   char name[513];
@@ -86,7 +95,8 @@ class client_action
   char d1_face[12];
   char d1_suit[20];
 
-
+  char d2_face[12];
+  char d2_suit[20];
 };
 
 class chat_message
