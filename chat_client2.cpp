@@ -19,6 +19,7 @@
 using asio::ip::tcp;
 
 int num1 = 0;
+int r_value = 0;
 
 
 typedef std::deque<chat_message> chat_message_queue;
@@ -76,13 +77,24 @@ private:
           {
             if(read_msg_.ca.stand != true){
               if(read_msg_.ca.track_num ==0){
+               std::cout << "-----------------------------------" << '\n';
                std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
                std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
                std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
-             }
+               std::cout << "----------------------------------------" << '\n';
+              }
+              else if(read_msg_.ca.r_value == 1){
+                r_value++;
+                std::cout << "-----------------------------------" << '\n';
+                std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
+                std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
+                std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
+                std::cout << "----------------------------------------" << '\n';
+              }
              else{
+               std::cout << "-------------------------------------------" << '\n';
                std::cout << "Your card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
-               //std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
+               std::cout << "-------------------------------------------" << '\n';
              }
              }
              else{
@@ -113,12 +125,22 @@ private:
               std::cout << "Enter Stand for Stand" << '\n';
               std::cout << "Enter Split for Split" << '\n';
               std::cout << "Enter Insurance for Insurance" << '\n';
+              std::cout << "Enter New to start the new game. *Game should be over*" << '\n';
               std::cout << "/* -------------------------------- */" << '\n';
             }
             else{
               std::cout << "You have now $" << read_msg_.gs.players_credit << '\n';
-              std::cout << "You stand, you win or lose" << '\n';
-              //Start new game now.
+              int cre = read_msg_.gs.players_credit - 100;
+              if(cre < 0){
+                int dd = -1 * cre;
+                std::cout << "Sorry, You are Losing by $"<< dd << '\n';
+              }
+              else if(cre > 0){
+                std::cout << "Congrtz, You winning by $" << cre << '\n';
+              }
+              else{
+                std::cout << "Currently, you are even out." << '\n';
+              }
             }
 
             //std::cout.write(read_msg_.body(), read_msg_.body_length());
@@ -212,6 +234,7 @@ int main(int argc, char* argv[])
     {
       msg.ca.bet = true;
       msg.ca.track_num = num1;
+      msg.ca.r_value = r_value;
       if(num1 == 0 ){
         msg.ca.name_valid = true;
         strcpy(msg.ca.name, nam);
@@ -223,6 +246,7 @@ int main(int argc, char* argv[])
         msg.ca.insurance = false;
         msg.ca.split = false;
         msg.ca.bet = false;
+        msg.ca.new_round = false;
       }
       else if(strcmp(nam, "Stand")==0){
         char an[chat_message::max_body_length + 1];
@@ -234,31 +258,54 @@ int main(int argc, char* argv[])
           msg.ca.insurance =false;
           msg.ca.split =false;
           msg.ca.bet = false;
+          msg.ca.new_round = false;
         }
       }
       else if(strcmp(nam, "Split")==0){
-        std::cout << " I am to Split" << '\n';
+      //  std::cout << " I am to Split" << '\n';
         msg.ca.hit = false;
         msg.ca.stand =false;
         msg.ca.insurance =false;
         msg.ca.split = true;
         msg.ca.bet = false;
+        msg.ca.new_round = false;
       }
       else if(strcmp(nam, "Insurance")==0){
-        std::cout << " I am to Insurance" << '\n';
+      //  std::cout << " I am to Insurance" << '\n';
         msg.ca.hit = false;
         msg.ca.stand =false;
         msg.ca.insurance = true;
         msg.ca.split =false;
         msg.ca.bet = false;
+        msg.ca.new_round = false;
       }
+      else if(strcmp(nam, "New")==0){
+      //  std::cout << " I am to Insurance" << '\n';
+        msg.ca.hit = false;
+        msg.ca.stand =false;
+        msg.ca.insurance = false;
+        msg.ca.split =false;
+        msg.ca.bet = false;
+        msg.ca.new_round = true;
+
+      }
+      else{
+        msg.ca.hit = false;
+        msg.ca.stand =false;
+        msg.ca.insurance = false;
+        msg.ca.split =false;
+        msg.ca.bet = false;
+        msg.ca.new_round = false;
+      }
+
     }
     if(msg.ca.bet){
       float d = send_betamount();
       msg.ca.bet_amo_ = d;
       if(msg.ca.stand){
         msg.ca.stand = false;
-        std::cout << "/* Starting the new round */" << '\n';
+        std::cout << "/*-------Starting the new round-------*/" << '\n';
+        std::cout << '\n';
       }
     }
 

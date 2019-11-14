@@ -35,11 +35,21 @@ class game_state{
   bool valid;
   int dealer_points;
   int player_points;
+
   float dealer_credit;
   float players_credit;
+
   bool player_win;
-  bool blackjack;
+  bool draw;
+
   int something[3];
+
+  int blackjack;
+
+  int user_hand_value1;
+  int user_hand_value2;
+
+  int dealer_hand_value;
 
   // note you can't use std::string
   // or pointers
@@ -51,6 +61,8 @@ class client_action
   public:
   int track_num;
   bool join;
+  bool new_round;
+  int r_value;
   bool valid;
 
   bool hit;
@@ -73,6 +85,8 @@ class client_action
 
   char d1_face[12];
   char d1_suit[20];
+
+
 };
 
 class chat_message
