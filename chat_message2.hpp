@@ -33,7 +33,7 @@ class card{
 class game_state{
 public:
   int user_id;
-    int k;
+  int k;
   bool valid;
   int dealer_points;
   int player_points;
@@ -57,7 +57,10 @@ public:
 
   bool v_greater;
 
-  char de_card[6][15];
+  float tip_amount;
+  bool tip;
+
+//  char de_card[6][15];
 
   // note you can't use std::string
   // or pointers

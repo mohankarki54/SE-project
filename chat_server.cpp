@@ -22,6 +22,7 @@
 #include <chrono>       // std::chrono::system_clock
 #include <time.h>
 #include<string>
+#include <thread>         // std::this_thread::sleep_for
 
 #include "asio.hpp"
 #include "chat_message2.hpp"
@@ -33,9 +34,14 @@ int xxx;
 
 int num = 0;
 float id_credit = 100;
-float dealer_cred = 500;
-int pp = 1;
+float dealer_cred = 0;
+int player_turn = 1;
 int co_num = 0;
+
+int dealer_flag = 1;
+
+
+int blackjack1;
 
 //----------------------------------------------------------------------
 
@@ -146,6 +152,12 @@ int dealer_rand_number(){
 	int num = rand() % 311;
 	return num;
 }
+
+
+//Selection of Dealer cardcard
+int k = random_number();
+int m = dealer_rand_number();
+
 
 std::vector<int> calculate_hand_value (vector<card> cards)
 {
@@ -321,9 +333,10 @@ public:
   {
 	num++;
   cout<<"Player id: "<< participant->id <<" joined with credit $"<< id_credit <<endl;
+
 	participants_.insert(participant);
 	game_user.push_back(participant);
-	//std::cout << "length of game_user" << game_user.size() << '\n';
+
 	//Sent the message to all the participant
   for (auto msg: recent_msgs_)
       participant->deliver(msg);
@@ -358,16 +371,9 @@ public:
     for (auto participant: participants_){
 
           if (participant->id== xxx){
-							if(pp == num){
-									pp = 1;
-						}
             	participant->deliver(msg);
         }
 		}
-	/*	if(pp == 1){
-			pp = 0;
-		}
-		pp++;*/
   }
 
 private:
@@ -417,11 +423,31 @@ private:
         {
           if (!ec && read_msg_.decode_header())
           {
-							xxx = id;
-							std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
+
+					if(id == player_turn){
+
+						if(read_msg_.gs.tip){
+							read_msg_.gs.dealer_credit = dealer_cred + read_msg_.gs.tip;
+							dealer_cred = read_msg_.gs.dealer_credit;
+							read_msg_.gs.tip = true;
+
+							std::cout << "Test dealer credit" << dealer_cred << '\n';
+						}
+						else{
+						xxx = id;
+						player_turn +=1;
+						std::cout << "pla id: "<< id << '\n';
+					  std::cout << "Player turn Num after incre: "<< player_turn << '\n';
+						int kk = game_user.size();
+						if(player_turn == kk+1){
+							player_turn = 1;
+							std::cout << "Player turn Num: "<< player_turn << '\n';
+						}
+						read_msg_.gs.user_id = id;
+						std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
             read_msg_.gs.valid = true;
 
-					if(read_msg_.gs.v_greater==false){
+					if(!read_msg_.gs.v_greater){
 						if(read_msg_.ca.new_round){
 							//std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
 							user_cards.clear();
@@ -432,9 +458,6 @@ private:
 							int n = dealer_rand_number();
 							int j = dealer_rand_number();
 
-							int k = random_number();
-							int m = dealer_rand_number();
-
 							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
 							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
 
@@ -447,31 +470,38 @@ private:
 							user_cards.push_back(all_card[j]);
 							all_card.erase(all_card.begin()+j);
 
-							strcpy(read_msg_.ca.d1_face, all_card[k].get_face());
-							strcpy(read_msg_.ca.d1_suit, all_card[k].get_suit());
+							if(dealer_flag == 1){
+								dealer_flag = 0;
+								strcpy(read_msg_.ca.d1_face, all_card[k].get_face());
+								strcpy(read_msg_.ca.d1_suit, all_card[k].get_suit());
 
-							strcpy(read_msg_.ca.d2_face, all_card[m].get_face());
-							strcpy(read_msg_.ca.d2_suit, all_card[m].get_suit());
+								strcpy(read_msg_.ca.d2_face, all_card[m].get_face());
+								strcpy(read_msg_.ca.d2_suit, all_card[m].get_suit());
 
-							dealer_card.push_back(all_card[k]);
-							all_card.erase(all_card.begin()+k);
+								dealer_card.push_back(all_card[k]);
 
-							dealer_card.push_back(all_card[m]);
-							all_card.erase(all_card.begin()+m);
+								all_card.erase(all_card.begin()+k);
 
-							int blackjack1 = check_blackjack(user_cards);
-							read_msg_.gs.blackjack = blackjack1;
+								dealer_card.push_back(all_card[m]);
+								all_card.erase(all_card.begin()+m);
+							}
+							else{
+								strcpy(read_msg_.ca.d1_face, dealer_card[0].get_face());
+								strcpy(read_msg_.ca.d1_suit, dealer_card[0].get_suit());
+
+								strcpy(read_msg_.ca.d2_face, dealer_card[1].get_face());
+								strcpy(read_msg_.ca.d2_suit, dealer_card[1].get_suit());
+							}
+							blackjack1 = check_blackjack(user_cards);
 							read_msg_.ca.bet = true;
 							std::cout << "/*---------------------------------*/" << '\n';
 						}
 						else if(read_msg_.ca.track_num == 0){
-
+							read_msg_.gs.players_credit = credit;
 							std::cout << "Player name" <<" " << read_msg_.ca.name << std::endl;
 							int n = dealer_rand_number();
 							int j = dealer_rand_number();
 
-							int k = random_number();
-							int m = dealer_rand_number();
 
 							strcpy(read_msg_.ca.c1_face, all_card[n].get_face());
 							strcpy(read_msg_.ca.c1_suit, all_card[n].get_suit());
@@ -485,6 +515,8 @@ private:
 							user_cards.push_back(all_card[j]);
 							all_card.erase(all_card.begin()+j);
 
+							if(dealer_flag == 1){
+								dealer_flag = 0;
 							strcpy(read_msg_.ca.d1_face, all_card[k].get_face());
 							strcpy(read_msg_.ca.d1_suit, all_card[k].get_suit());
 
@@ -496,15 +528,26 @@ private:
 
 							dealer_card.push_back(all_card[m]);
 							all_card.erase(all_card.begin()+m);
+						}
+						else{
+							strcpy(read_msg_.ca.d1_face, dealer_card[0].get_face());
+							strcpy(read_msg_.ca.d1_suit, dealer_card[0].get_suit());
 
-							int blackjack1 = check_blackjack(user_cards);
-							read_msg_.gs.blackjack = blackjack1;
+							strcpy(read_msg_.ca.d2_face, dealer_card[1].get_face());
+							strcpy(read_msg_.ca.d2_suit, dealer_card[1].get_suit());
+						}
+							blackjack1 = check_blackjack(user_cards);
 							std::cout << "/*---------------------------------*/" << '\n';
 						//	std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
 					//	else if(read_msg_.ca.hit || !read_msg_.ca.stand){
 						//
 						else if(read_msg_.ca.hit){
+							if(all_card.size()==0){
+								Make_Card make_card;
+								make_card.createDeck();
+								make_card.suffleDeck();
+							}
 							int k1;
 							std::cout << "Player asked the new card" << '\n';
 						if(read_msg_.ca.split !=true){
@@ -542,6 +585,15 @@ private:
 					}
 					else if(read_msg_.ca.stand)
 						{
+						/*if(dealer_flag==0){
+							dealer_flag == 1;
+						}*/
+						if(read_msg_.gs.dealer_credit <= 0){
+							std::cout << "**** Refilling the bank Credit ****" << '\n';
+							read_msg_.gs.dealer_credit = 500;
+							std::this_thread::sleep_for (std::chrono::seconds(30));
+						}
+						std::cout << " refilled delear credit" << read_msg_.gs.dealer_credit << '\n';
 						std::cout << "Players stand." << '\n';
 						hand_value = calculate_hand_value(user_cards);
 
@@ -565,7 +617,7 @@ private:
 						std::cout << "---------------------------------" << '\n';
 						std::cout << "Users Card" << '\n';
 						for(int i = 0; i < ss; i++){
-							strcpy(read_msg_.gs.de_card[i], user_cards[i].get_face());
+							//strcpy(read_msg_.gs.de_card[i], user_cards[i].get_face());
 							std::cout << user_cards[i].get_face()<<" "<< user_cards[i].get_suit() << '\n';
 						}
 						std::cout << "---------------------------------" << '\n';
@@ -642,7 +694,7 @@ private:
 						read_msg_.gs.d_value = mm;
 						read_msg_.gs.p_value = play_value;
 						std::cout << "Player "<< id <<" after stand have $" << read_msg_.gs.players_credit << std::endl;
-						std::cout << "Dealer after stand have $" << read_msg_.gs.dealer_credit << std::endl;
+						std::cout << "Current Dealer Credit $" << read_msg_.gs.dealer_credit << std::endl;
 						std::cout << "-----------------------------" << '\n';
 
 					}
@@ -769,7 +821,11 @@ private:
 
 					}
 						read_msg_.encode_header();
+
+
+					}
 						do_read_body();
+				}
           }
           else
           {
@@ -787,7 +843,6 @@ private:
         {
           if (!ec)
           {
-						read_msg_.gs.players_credit = credit;
 						read_msg_.encode_header();
             room_.deliver(read_msg_);
             do_read_header();
