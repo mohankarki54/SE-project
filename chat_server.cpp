@@ -33,8 +33,11 @@ using namespace std;
 int xxx;
 
 int num = 0;
+
 float id_credit = 100;
-float dealer_cred = 0;
+
+float dealer_cred = 500;
+
 int player_turn = 1;
 int co_num = 0;
 
@@ -333,7 +336,6 @@ public:
   {
 	num++;
   cout<<"Player id: "<< participant->id <<" joined with credit $"<< id_credit <<endl;
-
 	participants_.insert(participant);
 	game_user.push_back(participant);
 
@@ -363,13 +365,11 @@ public:
 
   void deliver(const chat_message& msg)
   {
-		//int mm = game_user.size();
     recent_msgs_.push_back(msg);
     while (recent_msgs_.size() > max_recent_msgs)
       recent_msgs_.pop_front();
 
     for (auto participant: participants_){
-
           if (participant->id== xxx){
             	participant->deliver(msg);
         }
@@ -430,18 +430,13 @@ private:
 							read_msg_.gs.dealer_credit = dealer_cred + read_msg_.gs.tip;
 							dealer_cred = read_msg_.gs.dealer_credit;
 							read_msg_.gs.tip = true;
-
-							std::cout << "Test dealer credit" << dealer_cred << '\n';
 						}
 						else{
 						xxx = id;
 						player_turn +=1;
-						std::cout << "pla id: "<< id << '\n';
-					  std::cout << "Player turn Num after incre: "<< player_turn << '\n';
 						int kk = game_user.size();
 						if(player_turn == kk+1){
 							player_turn = 1;
-							std::cout << "Player turn Num: "<< player_turn << '\n';
 						}
 						read_msg_.gs.user_id = id;
 						std::cout << "Player "<< id <<" bet $" << read_msg_.ca.bet_amo_ << std::endl;
@@ -538,10 +533,7 @@ private:
 						}
 							blackjack1 = check_blackjack(user_cards);
 							std::cout << "/*---------------------------------*/" << '\n';
-						//	std::cout << "Players cards " << all_card[n].get_face() << " of "<< all_card[n].get_suit() << std::endl;
 						}
-					//	else if(read_msg_.ca.hit || !read_msg_.ca.stand){
-						//
 						else if(read_msg_.ca.hit){
 							if(all_card.size()==0){
 								Make_Card make_card;
@@ -588,13 +580,14 @@ private:
 						/*if(dealer_flag==0){
 							dealer_flag == 1;
 						}*/
-						if(read_msg_.gs.dealer_credit <= 0){
+						if(dealer_cred <= 0){
+							std::cout << '\n';
 							std::cout << "**** Refilling the bank Credit ****" << '\n';
+							std::cout << '\n';
+							dealer_cred = 500;
 							read_msg_.gs.dealer_credit = 500;
 							std::this_thread::sleep_for (std::chrono::seconds(30));
 						}
-						std::cout << " refilled delear credit" << read_msg_.gs.dealer_credit << '\n';
-						std::cout << "Players stand." << '\n';
 						hand_value = calculate_hand_value(user_cards);
 
 						int mm = cal_value(dealer_card);
@@ -617,7 +610,6 @@ private:
 						std::cout << "---------------------------------" << '\n';
 						std::cout << "Users Card" << '\n';
 						for(int i = 0; i < ss; i++){
-							//strcpy(read_msg_.gs.de_card[i], user_cards[i].get_face());
 							std::cout << user_cards[i].get_face()<<" "<< user_cards[i].get_suit() << '\n';
 						}
 						std::cout << "---------------------------------" << '\n';
@@ -897,7 +889,9 @@ public:
 		make_card.suffleDeck();
 		chat_message read_msg_;
 		read_msg_.gs.dealer_credit = dealer_cred;
+		std::cout << "-----------------------------------" << '\n';
 		std::cout << "Starting the BlackJack Game Server" << std::endl;
+		std::cout << "-----------------------------------" << '\n';
 		std::cout << "Dealers credit: "<< read_msg_.gs.dealer_credit << '\n';
 		read_msg_.encode_header();
     do_accept();

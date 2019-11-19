@@ -23,15 +23,129 @@ int r_value = 2;
 bool split_v = false;
 float temp_bet;
 
-std::vector<char*> card_fir;
-
 
 std::vector<char*> user_cards_f;
+
+/*---------------------------*/
+int card_value(char* card){
+		if(strcmp(card, "Ace") == 0){
+			return 1;
+		}
+		else if(strcmp(card, "2") == 0){
+			return 2;
+		}
+		else if(strcmp(card, "3") == 0){
+			return 3;
+		}
+		else if(strcmp(card, "4") == 0){
+			return 4;
+		}
+		else if(strcmp(card, "5") == 0){
+			return 5;
+		}
+		else if(strcmp(card, "6") == 0){
+			return 6;
+		}
+		else if(strcmp(card, "7") == 0){
+			return 7;
+		}
+		else if(strcmp(card, "8") == 0){
+			return 8;
+		}
+		else if(strcmp(card, "9") == 0){
+			return 9;
+		}
+		else{
+			return 10;
+		}
+}
+
+int is_ace(char* card ){
+	int value;
+	if(strcmp(card, "Ace") == 0){
+		value =  1;
+	}
+	else{
+		value = 0;
+	}
+	return value;
+}
+
+std::vector<int> calculate_hand_value (vector<char*> cards)
+{
+//When Ace there will be two value.
+	int N = cards.size();
+	std::vector<int> value;
+	int val1 = 0;
+	int val2 = 0;
+	int i;
+	for(i = 0; i< N; i++){
+		if(is_ace(cards[i])){
+			val1 += 1;
+			val2 += 11;
+		}else{
+			val1 += card_value(cards[i]);
+			val2 += card_value(cards[i]);
+		}
+	}
+	value.push_back(val1);
+	value.push_back(val2);
+ return value;
+}
+
+int calculate_p_value(std::vector<char*> dea){
+	std::vector<int> dea_value = calculate_hand_value(dea);
+	//std::cout <<" Integer value :"<< dea_value[0] << dea_value[1] << '\n';
+	int mm;
+	if(dea_value[0] !=dea_value[1]){
+			if(dea_value[0] > dea_value[1]){
+				if(dea_value[0]<22){
+					mm = dea_value[0];
+				}
+				else{
+					mm = dea_value[1];
+				}
+			}
+			else{
+				if(dea_value[1]<22){
+					mm = dea_value[1];
+				}
+				else{
+					mm = dea_value[0];
+				}
+			}
+	}
+	else{
+		mm = dea_value[0];
+	}
+	return mm;
+}
+
+int check_more(vector<char*> car){
+		int m = calculate_p_value(car);
+		if(m > 21){
+      return 1;
+    }
+    return 0;
+}
+
+int blackjack_(vector<char*> car){
+		int m = calculate_p_value(car);
+		if(m == 21){
+      return 1;
+    }
+    return 0;
+}
+
+
+/*---------------------------*/
+
+std::vector<char*> card_fir;
+
 std::vector<char*> dealers_cards_f;
 
 std::vector<char*> user_cards_s;
 std::vector<char*> dealers_cards_s;
-
 
 float play_credit;
 
@@ -53,12 +167,10 @@ public:
     asio::post(io_context_,
         [this, msg]()
         {
-        //  std::cout << "Outside if" << '\n';
           bool write_in_progress = !write_msgs_.empty();
           write_msgs_.push_back(msg);
           if (!write_in_progress)
           {
-          //  std::cout << "Inside if" << '\n';
             do_write();
           }
         });
@@ -102,10 +214,12 @@ private:
                r_value++;
                card_fir.push_back(read_msg_.ca.d1_face);
                std::cout << "-----------------------------------" << '\n';
+               std::cout << '\n';
                std::cout << "Your first card " << read_msg_.ca.c1_face << " of "<< read_msg_.ca.c1_suit<< std::endl;
                std::cout << "Your second card " << read_msg_.ca.c2_face << " of "<< read_msg_.ca.c2_suit<< std::endl;
                std::cout << "Dealer first card " << read_msg_.ca.d1_face << " of "<< read_msg_.ca.d1_suit<< std::endl;
-               std::cout << "----------------------------------------" << '\n';
+               std::cout << '\n';
+               std::cout << "------------------------------------------" << '\n';
 
                user_cards_f.push_back(read_msg_.ca.c1_face);
                user_cards_s.push_back(read_msg_.ca.c2_suit);
@@ -130,23 +244,18 @@ private:
              }
              }
              else{
-          /*   int ss = user_cards_f.size();
-   						std::cout << "---------------------------------" << '\n';
-   					std::cout << "Your Cards" << '\n';
-   						for(int i = 0; i < ss; i++){
-   							std::cout << user_cards_f[i]<<" "<< user_cards_s[i] << '\n';
-   						};*/
+
+              std::cout << "--------------------------------------" << '\n';
+              std::cout << '\n';
               std::cout << "Your card value: " << read_msg_.gs.p_value << '\n';
-   						std::cout << "---------------------------------" << '\n';
-   					//	std::cout << "Dealer Cards" << '\n';
-   						/*int ss1 = dealers_cards_f.size();
-   						for(int i = 0; i < ss1; i++){
-   							std::cout << dealers_cards_f[i]<<" "<< dealers_cards_s[i] << '\n';
-   						}*/
               std::cout << "Dealer card value: " << read_msg_.gs.d_value << '\n';
+              std::cout  << '\n';
    						std::cout << "--------------------------------------" << '\n';
+              std::cout << '\n';
              }
-            do_read_body();
+
+               do_read_body();
+
           }
           else
           {
@@ -164,18 +273,37 @@ private:
           if (!ec)
           {
             if(read_msg_.gs.tip){
+              play_credit = read_msg_.gs.players_credit;
+              std::cout << "You have now $" << read_msg_.gs.players_credit << '\n';
+              int cre = read_msg_.gs.players_credit - 100;
+              if(cre < 0){
+                int dd = -1 * cre;
+                std::cout << "Sorry, You are Losing by $"<< dd << '\n';
+              }
+              else if(cre > 0){
+                std::cout << "Congrtz, You winning by $" << cre << '\n';
+              }
+              else{
+                std::cout << "Currently, you are even out." << '\n';
+              }
               exit(0);
             }
-            if (read_msg_.gs.valid && read_msg_.ca.stand != true){
+            if(blackjack_(user_cards_f)== 1){
+              std::cout << "Congratulations, You have the blackJack. Press 'ENTER' to see result. " << '\n';
+            }
+            if (read_msg_.gs.valid && read_msg_.ca.stand != true && blackjack_(user_cards_f) == 0 ){
               std::cout << "/* -------------------------------- */" << '\n';
+              std::cout << '\n';
               std::cout << "/* What you like to do? */" << '\n';
-              std::cout << "Enter Hit for Hit" << '\n';
-              std::cout << "Enter Stand for Stand or to deal." << '\n';
-              std::cout << "Enter Split for Split" << '\n';
-              std::cout << "Enter Insurance for Insurance" << '\n';
-              std::cout << "Enter New to start the new game. *Game should be over*" << '\n';
-              std::cout << "Enter Exit leave the game. *Game should be over*" << '\n';
+              std::cout << "Enter 'Hit' for Hit" << '\n';
+              std::cout << "Enter 'Stand' for Stand or to deal." << '\n';
+              std::cout << "Enter 'Split' for Split" << '\n';
+              std::cout << "Enter 'Insurance' for Insurance" << '\n';
+              std::cout << "Enter 'New' to start the new game. *Game should be over*" << '\n';
+              std::cout << "Enter 'Exit' leave the game. *Please do Stand before Exit*" << '\n';
+              std::cout << '\n';
               std::cout << "/* -------------------------------- */" << '\n';
+
             }
             else{
               play_credit = read_msg_.gs.players_credit;
@@ -191,10 +319,10 @@ private:
               else{
                 std::cout << "Currently, you are even out." << '\n';
               }
+              std::cout << '\n';
+              std::cout << "Press 'ENTER' and 'New' to start the new game or 'Exit' to leave the game. " << '\n';
+              std::cout << '\n';
             }
-
-            //std::cout.write(read_msg_.body(), read_msg_.body_length());
-            //std::cout << "\n";
             do_read_header();
           }
           else
@@ -252,7 +380,7 @@ float send_betamount(){
 
 int startgame(){
   char ans[chat_message::max_body_length + 1];
-  std::cout << "Do you like to start the game? ";
+  std::cout << "Do you like to start the game? Enter ('yes') to start: ";
   std::cin.getline(ans, chat_message::max_body_length + 1);
   int result = strcmp(ans, "yes");
   if(result !=0){
@@ -295,14 +423,15 @@ int main(int argc, char* argv[])
     char nam[chat_message::max_body_length + 1];
 
     chat_message msg;
-    std::cout << "Welcome to the BlackJack Game" << '\n';
+    std::cout << " ------Welcome to the CASINO ROYALE------" << '\n';
+    std::cout << " Every Player Starts with 100$ credits \n ---------------------------------------------------- \n BLACKJACK WILL PLAY 3 TO 2 \n WIN PLAYS 2 TO 1 \n ---------------------------------------------------- \n\n  " << '\n';
 
     int result = startgame();
     if(result == 0){
       msg.ca.start_game = true;
     }
 
-    std::cout << "Enter your name: ";
+    std::cout << "Enter your name (optional): ";
     while (std::cin.getline(nam, chat_message::max_body_length + 1))
     {
       msg.ca.bet = true;
@@ -314,24 +443,32 @@ int main(int argc, char* argv[])
         num1++;
     }else{
       if(strcmp(nam, "Hit")==0){
+        if(check_more(user_cards_f) == 1){
+          std::cout << "*** You are busted. Card Value more than 21 ***" << '\n';
+          msg.ca.hit = false;
+          msg.ca.stand = true;
+          msg.ca.insurance = false;
+          msg.ca.split = false;
+          msg.ca.bet = false;
+          msg.ca.new_round = false;
+          msg.gs.tip = false;
+        }else{
         msg.ca.hit = true;
         msg.ca.stand = false;
         msg.ca.insurance = false;
-
         if(split_v){
           msg.ca.split = true;
         }else{
           msg.ca.split = false;
         }
-
         msg.ca.bet = false;
         msg.ca.new_round = false;
-        msg.gs.tip = false;
-
+        msg.gs.tip  = false;
+      }
       }
       else if(strcmp(nam, "Stand")==0){
         char an[chat_message::max_body_length + 1];
-        std::cout << " Are you sure you want to stand? ";
+        std::cout << "Are you sure you want to stand? ";
         std::cin.getline(an, chat_message::max_body_length + 1);
         if(strcmp(an, "yes") == 0){
           msg.ca.hit = false;
@@ -388,7 +525,6 @@ int main(int argc, char* argv[])
         msg.ca.bet = true;
         msg.ca.new_round = true;
         msg.gs.tip = false;
-
       }
       else if(strcmp(nam, "Exit")==0){
         msg.ca.hit = false;
@@ -398,7 +534,7 @@ int main(int argc, char* argv[])
         msg.ca.bet = false;
         msg.ca.new_round = false;
         msg.gs.tip = true;
-        if(play_credit>0){
+      /*  if(play_credit>0){
           char amo[chat_message::max_body_length + 1];
           std::cout << "Enter the tip amount $";
           std::cin.getline(amo, chat_message::max_body_length + 1);
@@ -407,8 +543,10 @@ int main(int argc, char* argv[])
           std::cout << "Thank you so much for your Tip" << '\n';
         }else{
           exit(0);
-        }
+        }*/
 
+        std::cout << "Thank you for playing with us." << '\n';
+        exit(0);
       }
       else{
         msg.gs.tip = false;
