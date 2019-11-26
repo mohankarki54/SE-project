@@ -28,6 +28,7 @@ std::vector<char*> user_cards_f;
 
 /*---------------------------*/
 int card_value(char* card){
+	//Calculate the individual card value.
 		if(strcmp(card, "Ace") == 0){
 			return 1;
 		}
@@ -61,6 +62,7 @@ int card_value(char* card){
 }
 
 int is_ace(char* card ){
+	//checks for is the card is ace or not. If yes, return 1 else 0
 	int value;
 	if(strcmp(card, "Ace") == 0){
 		value =  1;
@@ -73,7 +75,7 @@ int is_ace(char* card ){
 
 std::vector<int> calculate_hand_value (vector<char*> cards)
 {
-//When Ace there will be two value.
+//When Ace there will be two different value, and returns the hald value of the user or dealer.
 	int N = cards.size();
 	std::vector<int> value;
 	int val1 = 0;
@@ -94,6 +96,7 @@ std::vector<int> calculate_hand_value (vector<char*> cards)
 }
 
 int calculate_p_value(std::vector<char*> dea){
+	//calculate the player value
 	std::vector<int> dea_value = calculate_hand_value(dea);
 	//std::cout <<" Integer value :"<< dea_value[0] << dea_value[1] << '\n';
 	int mm;
@@ -122,6 +125,7 @@ int calculate_p_value(std::vector<char*> dea){
 }
 
 int check_more(vector<char*> car){
+	//checks if the value of handvalue is more than 21 or not. If yes, return 1 else 0
 		int m = calculate_p_value(car);
 		if(m > 21){
       return 1;
@@ -130,6 +134,7 @@ int check_more(vector<char*> car){
 }
 
 int blackjack_(vector<char*> car){
+	//checks if the value of handvalue is blackjack or not. If yes, return 1 else 0
 		int m = calculate_p_value(car);
 		if(m == 21){
       return 1;
@@ -534,17 +539,6 @@ int main(int argc, char* argv[])
         msg.ca.bet = false;
         msg.ca.new_round = false;
         msg.gs.tip = true;
-      /*  if(play_credit>0){
-          char amo[chat_message::max_body_length + 1];
-          std::cout << "Enter the tip amount $";
-          std::cin.getline(amo, chat_message::max_body_length + 1);
-          float amo_ = stof(amo);
-          msg.gs.tip_amount = amo_;
-          std::cout << "Thank you so much for your Tip" << '\n';
-        }else{
-          exit(0);
-        }*/
-
         std::cout << "Thank you for playing with us." << '\n';
         exit(0);
       }

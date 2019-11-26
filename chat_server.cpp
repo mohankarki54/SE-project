@@ -76,6 +76,7 @@ string suits[] = {"Hearts", "Diamonds", "Clubs", "Spades"};
 
 //-------------------------------------------
 class Make_Card{
+	//creates the deck of the deck and suffle it
 	public:
 		void createDeck(){
 			for(int i = 0; i<6; i++){
@@ -83,10 +84,6 @@ class Make_Card{
 					all_card.push_back(card(&faces[count % 13][0],  &suits[count / 13][0]));
 				}
 			}
-		/*for(int j = 0; j< 10; j++){
-				std::cout <<  all_card[j].get_face()<<" "<< all_card[j].get_suit() <<'\n';
-			}
-			std::cout << all_card.size() << '\n';*/
 		}
 
 		void suffleDeck(){
@@ -94,14 +91,11 @@ class Make_Card{
 				unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 				std::default_random_engine e(seed);
 				std::shuffle(all_card.begin(), all_card.end(), e);
-				/*for(int j = 0; j< 10; j++){
-					std::cout <<  all_card[j].get_face()<<" "<< all_card[j].get_suit() <<'\n';
-				}
-			std::cout << all_card.size() << '\n';*/
 		}
 };
 
 int card_value(char* card){
+	//calculate the individual card value..
 		if(strcmp(card, "Ace") == 0){
 			return 1;
 		}
@@ -135,6 +129,7 @@ int card_value(char* card){
 }
 
 int is_ace(char* card ){
+	//check the card is ace or not. If yes, return 1 else 0;
 	int value;
 	if(strcmp(card, "Ace") == 0){
 		value =  1;
@@ -146,12 +141,14 @@ int is_ace(char* card ){
 }
 
 int random_number(){
+	//Retunrs the random number generated.
 	srand (time(NULL));
 	int num = rand() % 311;
 	return num;
 }
 
 int dealer_rand_number(){
+	//Retunrs the random number generated.
 	int num = rand() % 311;
 	return num;
 }
@@ -164,7 +161,7 @@ int m = dealer_rand_number();
 
 std::vector<int> calculate_hand_value (vector<card> cards)
 {
-//When Ace there will be two value.
+//When Ace there will be two value. returns the calculate the hand value.
 	int N = cards.size();
 	std::vector<int> value;
 	int val1 = 0;
@@ -185,6 +182,7 @@ std::vector<int> calculate_hand_value (vector<card> cards)
 }
 
 int check_blackjack(vector<card> car){
+	//Returns 1 if the card is blackjack else 0;
 		std::vector<int> v = calculate_hand_value(car);
 		int k = v.size();
 		for(int i = 0; i < k; i++ ){
@@ -196,6 +194,7 @@ int check_blackjack(vector<card> car){
 }
 
 int cal_value(std::vector<card> dea){
+	//return the hand value.
 	std::vector<int> dea_value = calculate_hand_value(dea);
 	int mm;
 	if(dea_value[0] !=dea_value[1]){
@@ -223,6 +222,7 @@ int cal_value(std::vector<card> dea){
 }
 
 int calculate_p_value(std::vector<card> dea){
+	//return the hand value.
 	std::vector<int> dea_value = calculate_hand_value(dea);
 	//std::cout <<" Integer value :"<< dea_value[0] << dea_value[1] << '\n';
 	int mm;
@@ -251,6 +251,8 @@ int calculate_p_value(std::vector<card> dea){
 }
 
 int calculate_s_value(std::vector<card> s_1, std::vector<card> s_2){
+	//return the hand value.
+
 	std::vector<int> dea_value = calculate_hand_value(s_1);
 	std::vector<int> dea_value1 = calculate_hand_value(s_2);
 	//std::cout <<" Integer value :"<< dea_value[0] << dea_value[1] << '\n';
@@ -306,6 +308,7 @@ int calculate_s_value(std::vector<card> s_1, std::vector<card> s_2){
 
 //---------------------------------------------------------------
 class chat_participant{
+	//This class creates the players and its attribute.
 public:
   virtual ~chat_participant() {}
   virtual void deliver(const chat_message& msg) = 0;
@@ -330,6 +333,7 @@ std::vector<chat_participant_ptr> game_user;
 
 class chat_room
 {
+	//In this class, it take cares of the user join, leave and delivering message.
 public:
 
   void join(chat_participant_ptr participant)
@@ -390,6 +394,8 @@ class chat_session
   : public chat_participant,
     public std::enable_shared_from_this<chat_session>
 {
+	//Server start the game session and takes care of the every functionalites of the black jack server
+//Encoding and decoding of the message happens in this function. 
 public:
   chat_session(tcp::socket socket, chat_room& room)
     : socket_(std::move(socket)),
